@@ -1,74 +1,140 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function RFIDReader() {
+  const [rfidUID, setRfidUID] = useState(''); // Holds the scanned UID
+  const [isScanning, setIsScanning] = useState(false); // Tracks scanning state
+  const [statusMessage, setStatusMessage] = useState(''); // Tracks scan status
+  const [studentDetails, setStudentDetails] = useState(null); // Student details
 
-export default function HomeScreen() {
+  useEffect(() => {
+    if (rfidUID) {
+      fetchStudentDetails(rfidUID);
+    }
+  }, [rfidUID]);
+
+  const fetchStudentDetails = async (uid) => {
+    try {
+      // Replace localhost with your local IP for mobile access
+      const response = await fetch(`http://192.168.1.100:5000/api/student/${uid}`);
+      if (response.status === 404) {
+        setStatusMessage('Student not found.');
+        setStudentDetails(null);
+        return;
+      }
+
+      const student = await response.json();
+      setStudentDetails(student);
+      setStatusMessage('Student details fetched successfully.');
+    } catch (error) {
+      console.error('Error fetching student details:', error);
+      setStatusMessage('Failed to fetch student details.');
+    }
+  };
+
+  const startScanning = () => {
+    setRfidUID('');
+    setIsScanning(true);
+    setStatusMessage('Scanning in progress...');
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <Text style={styles.header}>RFID Reader</Text>
+      <Text style={styles.instructions}>Click "Start Scanning" and scan your RFID card.</Text>
+
+      {/* Start Scanning Button */}
+      <Button
+        onPress={startScanning}
+        title={isScanning ? 'Scanning...' : 'Start Scanning'}
+        color="#4299e1"
+        disabled={isScanning}
+      />
+
+      {/* UID Input Field */}
+      <TextInput
+        style={styles.input}
+        value={rfidUID}
+        onChangeText={setRfidUID}
+        placeholder="Waiting for scan..."
+        editable={isScanning}
+      />
+
+      {/* Fetch Student Details Button */}
+      <Button
+        onPress={() => fetchStudentDetails(rfidUID)}
+        title="Fetch Student Details"
+        color="#3182ce"
+        disabled={!rfidUID}
+      />
+
+      {/* Student Details */}
+      {studentDetails && (
+        <View style={styles.studentDetails}>
+          <Text style={styles.studentHeader}>Student Details</Text>
+          <Text style={styles.detail}><Text style={styles.label}>Name:</Text> {studentDetails.name}</Text>
+          <Text style={styles.detail}><Text style={styles.label}>Enrollment Number:</Text> {studentDetails.enrollmentNumber}</Text>
+          <Text style={styles.detail}><Text style={styles.label}>Course:</Text> {studentDetails.course}</Text>
+          <Text style={styles.detail}><Text style={styles.label}>Year:</Text> {studentDetails.year}</Text>
+          <Text style={styles.detail}><Text style={styles.label}>Status:</Text> {studentDetails.status}</Text>
+        </View>
+      )}
+
+      {/* Status Message */}
+      {statusMessage && <Text style={styles.status}>{statusMessage}</Text>}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    padding: 20,
+    backgroundColor: '#f9fafb',
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  instructions: {
+    marginBottom: 20,
+    fontSize: 16,
+    color: '#555',
+  },
+  input: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginVertical: 10,
+    width: '100%',
+  },
+  studentDetails: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#edf2f7',
+    borderRadius: 8,
+    width: '100%',
+  },
+  studentHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  detail: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  label: {
+    fontWeight: 'bold',
+  },
+  status: {
+    marginTop: 20,
+    fontSize: 14,
+    color: '#3182ce',
   },
 });
