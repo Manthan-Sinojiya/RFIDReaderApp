@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const app = express();
-const PORT = 5000;
+const PORT = 5001;
 
 // Middleware
 app.use(bodyParser.json());
@@ -12,7 +12,7 @@ app.use(cors());
 
 // MongoDB connection
 mongoose
-  .connect('mongodb://localhost:27017/rfidDB', {
+  .connect('mongodb+srv://RFID:RFID@rfidreaderapp.c4fal.mongodb.net///rfidDB', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
@@ -187,5 +187,5 @@ app.put('/api/student/:rfidUID', async (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://mongodb+srv://RFID:RFID@rfidreaderapp.c4fal.mongodb.net/:${PORT}`);
 });

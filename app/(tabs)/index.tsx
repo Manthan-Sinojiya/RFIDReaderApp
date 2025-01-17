@@ -15,26 +15,29 @@ export default function RFIDReader() {
 
   const fetchStudentDetails = async (uid) => {
     try {
-      // Replace localhost with your local IP for mobile access
-      const response = await fetch(`http://192.168.1.100:5000/api/student/${uid}`);
+      // Replace localhost with your public IP or ngrok URL
+      const response = await fetch(`http://172.16.108.62:5001/api/student/rfid/${uid}`);
       if (response.status === 404) {
         setStatusMessage('Student not found.');
         setStudentDetails(null);
+        setIsScanning(false);  // Stop scanning on failure
         return;
       }
 
       const student = await response.json();
       setStudentDetails(student);
       setStatusMessage('Student details fetched successfully.');
+      setIsScanning(false);  // Stop scanning once the details are fetched
     } catch (error) {
       console.error('Error fetching student details:', error);
       setStatusMessage('Failed to fetch student details.');
+      setIsScanning(false);  // Stop scanning on error
     }
   };
 
   const startScanning = () => {
-    setRfidUID('');
-    setIsScanning(true);
+    setRfidUID('');  // Clear previous UID
+    setIsScanning(true);  // Start scanning
     setStatusMessage('Scanning in progress...');
   };
 
